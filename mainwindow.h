@@ -11,6 +11,7 @@
 #include <QNetworkProxy>
 #include <QHash>
 #include <QDate>
+#include <QColor>
 
 #include "changeaccountdialog.h"
 namespace Ui {

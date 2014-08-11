@@ -89,12 +89,15 @@ void MainWindow::recvFunction()
 {
     QHash <QString, QString> users;
     QHashIterator <QString, QString> userIterator(users);
+    QFile logs("logs.txt");
+    QTextStream savelog(&logs);
     char buffer[1], nb[] = "\x00", zchar[] = "02Z900_";
     const char *hashtaglen;
     size_t start, end;
-    std::string rdata, uid, tableuser, hashtag, msg;
+    std::string rdata, uid, tableuser, hashtag, msg, rgbcolor;
     QString quid, qtableuser, qmsg;
     QTableWidgetItem *ID, *NAME;
+    QColor rgbvalue;
     int rlen;
     do
     {
@@ -164,7 +167,6 @@ void MainWindow::recvFunction()
                     start = rdata.find(hashtaglen) + strlen(hashtaglen);
                     end = strlen("12345678901234567890") - strlen(hashtaglen);
                     tableuser = rdata.substr(start, end); qtableuser = QString::fromStdString(tableuser);
-                    users.insert(quid, qtableuser);
                     NAME = new QTableWidgetItem(qtableuser);
                     ui->userTable->setItem(row, 1, NAME);
                     row++;
@@ -202,11 +204,27 @@ void MainWindow::recvFunction()
                         {
                             currenttime = QTime().currentTime().toString("h:mm:ss AP");
                             qtableuser = ui->userTable->item(i, 1)->text();
-                            ui->textBrowser->append('[' + currenttime + " " + QDate().currentDate().toString("d/MM/yy") + ']' + "<" + qtableuser + "> " + qmsg);
-                            QTextCursor c =  ui->textBrowser->textCursor();
-                            c.movePosition(QTextCursor::End);
-                            ui->textBrowser->setTextCursor(c);
-                            break;
+                            if(qtableuser == MainWindow::userName)
+                            {
+                                ui->textBrowser->append('[' + currenttime + " " + QDate().currentDate().toString("d/MM/yy") + ']' + "<span style = \"color: #FA7070\">&lt;" + qtableuser + "&gt;</span>" + qmsg);
+                            }
+                            else
+                            {
+                                ui->textBrowser->append('[' + currenttime + " " + QDate().currentDate().toString("d/MM/yy") + ']' + "<span style = \"color: #6AB9C7\">&lt;" + qtableuser + "&gt;</span>" + qmsg);
+
+                            }
+
+                            if(ui->textBrowser->textCursor().position() != QTextCursor::End)
+                            {
+                                break;
+                            }
+                            else
+                            {
+                                QTextCursor c =  ui->textBrowser->textCursor();
+                                c.movePosition(QTextCursor::End);
+                                ui->textBrowser->setTextCursor(c);
+                                break;
+                            }
                         }
                     }
                 }
@@ -244,10 +262,10 @@ void MainWindow::recvFunction()
                 {
                     s1->write(b03, strlen(b03)+1);
                 }
-//                if(rdata[1] == '1')
-//                {
-//                    s1->write(zchar, strlen(zchar)+1);
-//                }
+                //                if(rdata[1] == '1')
+                //                {
+                //                    s1->write(zchar, strlen(zchar)+1);
+                //                }
                 if(rdata[1] == 'c')
                 {
                     s1->write(b03, strlen(b03)+1);

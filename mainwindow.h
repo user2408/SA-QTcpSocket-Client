@@ -12,6 +12,7 @@
 #include <QHash>
 #include <QDate>
 #include <QColor>
+#include <cstdlib>
 
 #include "changeaccountdialog.h"
 namespace Ui {

@@ -21,8 +21,11 @@ MainWindow::MainWindow(QWidget *parent) :
     timecalc = new QTimer(this);
 
     ui->setupUi(this);
-    ui->userTable->setColumnWidth(0, 40);
-    ui->userTable->setColumnWidth(1, 159);
+    ui->userTable->setColumnWidth(1, 200);
+    ui->userTable->setColumnHidden(0, true);
+    ui->userTable->setColumnHidden(2, true);
+    ui->userTable->setColumnHidden(3, true);
+    ui->userTable->setColumnHidden(4, true);
 
     connect(ui->action2_Dimensional_Center, SIGNAL(triggered()), this, SLOT(twodc()));
     connect(ui->actionPaper_Thin_City, SIGNAL(triggered()), this, SLOT(ptc()));
@@ -89,16 +92,18 @@ void MainWindow::recvFunction()
 {
     QHash <QString, QString> users;
     QHashIterator <QString, QString> userIterator(users);
-    QFile logs("logs.txt");
-    QTextStream savelog(&logs);
     char buffer[1], nb[] = "\x00", zchar[] = "02Z900_";
     const char *hashtaglen;
     size_t start, end;
     std::string rdata, uid, tableuser, hashtag, msg, rgbcolor;
     QString quid, qtableuser, qmsg;
-    QTableWidgetItem *ID, *NAME;
+    QTableWidgetItem *ID, *NAME, *QR, *QG, *QB;
     QColor rgbvalue;
     int rlen;
+    QString qr, qg, qb;
+
+    int r, g, b;
+    const char *cr, *cg, *cb;
     do
     {
         rlen = s1->read(buffer, 1);
@@ -113,17 +118,19 @@ void MainWindow::recvFunction()
             switch(rdata[0])
             {
             case 'C':
+                break;
+            case 'A':
                 playercount++;
                 qplayercount = QString::number(playercount);
                 ui->label->setText("Player count: " + qplayercount);
-                break;
-            case 'A':
-                s1->write("0c", strlen("0c")+1);
-                s1->write("01", strlen("01")+1);
+                //                s1->write("0c", strlen("0c")+1);
+                //                s1->write("01", strlen("01")+1);
+                s1->write(b03, strlen(b03)+1);
                 uid = rdata.substr(1, 3); quid = QString::fromStdString(uid);
                 ID = new QTableWidgetItem(quid);
                 ui->userTable->insertRow(row);
                 ui->userTable->setItem(row, 0, ID);
+                ui->userTable->setRowHeight(row, 20);
 
                 if(strlen(hashtaglen) == 0)
                 {
@@ -133,6 +140,51 @@ void MainWindow::recvFunction()
                     users.insert(quid, qtableuser);
                     NAME = new QTableWidgetItem(qtableuser);
                     ui->userTable->setItem(row, 1, NAME);
+
+                    const char *ctableuser = tableuser.c_str();
+                    start = rdata.find(tableuser) + strlen(ctableuser);
+                    end = rdata.find(";");
+                    std::string strr = rdata.substr(start, 3);
+                    std::string strg = rdata.substr(start + 3, 3);
+                    std::string strb = rdata.substr(start + 6, 3);
+
+                    cr = strr.c_str(), cg = strg.c_str(), cb = strb.c_str();
+
+                    r = atoi(cr);
+                    g = atoi(cg);
+                    b = atoi(cb);
+
+                    r += 100;
+                    g += 100;
+                    b += 100;
+
+                    if(r > 255)
+                    {
+                        r = 255;
+                    }
+                    if(g > 255)
+                    {
+                        g = 255;
+                    }
+                    if(b > 255)
+                    {
+                        b = 255;
+                    }
+
+                    qr = QString::number(r);
+                    qg = QString::number(g);
+                    qb = QString::number(b);
+                    QR = new QTableWidgetItem(qr);
+                    QG = new QTableWidgetItem(qg);
+                    QB = new QTableWidgetItem(qb);
+                    ui->userTable->setItem(row, 2, QR);
+                    ui->userTable->setItem(row, 3, QG);
+                    ui->userTable->setItem(row, 4, QB);
+
+                    rgbvalue.setRgb(r, g, b);
+
+                    ui->userTable->item(row, 1)->setBackground(rgbvalue);
+
                     row++;
                 }
                 else
@@ -140,26 +192,118 @@ void MainWindow::recvFunction()
                     start = rdata.find(hashtaglen) + strlen(hashtaglen);
                     end = strlen("12345678901234567890") - strlen(hashtaglen);
                     tableuser = rdata.substr(start, end); qtableuser = QString::fromStdString(tableuser);
-                    users.insert(quid, qtableuser);
                     NAME = new QTableWidgetItem(qtableuser);
                     ui->userTable->setItem(row, 1, NAME);
+
+                    const char *ctableuser = tableuser.c_str();
+                    start = rdata.find(tableuser) + strlen(ctableuser);
+                    end = rdata.find(";");
+                    std::string strr = rdata.substr(start, 3);
+                    std::string strg = rdata.substr(start + 3, 3);
+                    std::string strb = rdata.substr(start + 6, 3);
+
+                    cr = strr.c_str(), cg = strg.c_str(), cb = strb.c_str();
+
+                    r = atoi(cr);
+                    g = atoi(cg);
+                    b = atoi(cb);
+
+                    r += 100;
+                    g += 100;
+                    b += 100;
+
+                    if(r > 255)
+                    {
+                        r = 255;
+                    }
+                    if(g > 255)
+                    {
+                        g = 255;
+                    }
+                    if(b > 255)
+                    {
+                        b = 255;
+                    }
+
+                    qr = QString::number(r);
+                    qg = QString::number(g);
+                    qb = QString::number(b);
+                    QR = new QTableWidgetItem(qr);
+                    QG = new QTableWidgetItem(qg);
+                    QB = new QTableWidgetItem(qb);
+                    ui->userTable->setItem(row, 2, QR);
+                    ui->userTable->setItem(row, 3, QG);
+                    ui->userTable->setItem(row, 4, QB);
+
+                    rgbvalue.setRgb(r, g, b);
+
+                    ui->userTable->item(row, 1)->setBackground(rgbvalue);
+
                     row++;
                 }
                 break;
             case 'U':
+                playercount++;
+                qplayercount = QString::number(playercount);
+                ui->label->setText("Player count: " + qplayercount);
                 uid = rdata.substr(1, 3); quid = QString::fromStdString(uid);
                 ID = new QTableWidgetItem(quid);
                 ui->userTable->insertRow(row);
                 ui->userTable->setItem(row, 0, ID);
+                ui->userTable->setRowHeight(row, 20);
 
                 if(strlen(hashtaglen) == 0)
                 {
                     start = 4;
                     end = strlen("")+24;
                     tableuser = rdata.substr(start, end - start); qtableuser = QString::fromStdString(tableuser);
-                    users.insert(quid, qtableuser);
+                    //                    users.insert(quid, qtableuser);
                     NAME = new QTableWidgetItem(qtableuser);
                     ui->userTable->setItem(row, 1, NAME);
+                    const char *ctableuser = tableuser.c_str();
+                    start = rdata.find(tableuser) + strlen(ctableuser);
+                    end = rdata.find(";");
+                    std::string strr = rdata.substr(start, 3);
+                    std::string strg = rdata.substr(start + 3, 3);
+                    std::string strb = rdata.substr(start + 6, 3);
+
+                    cr = strr.c_str(), cg = strg.c_str(), cb = strb.c_str();
+
+                    r = atoi(cr);
+                    g = atoi(cg);
+                    b = atoi(cb);
+
+                    r += 100;
+                    g += 100;
+                    b += 100;
+
+                    if(r > 255)
+                    {
+                        r = 255;
+                    }
+                    if(g > 255)
+                    {
+                        g = 255;
+                    }
+                    if(b > 255)
+                    {
+                        b = 255;
+                    }
+
+                    qr = QString::number(r);
+                    qg = QString::number(g);
+                    qb = QString::number(b);
+                    QR = new QTableWidgetItem(qr);
+                    QG = new QTableWidgetItem(qg);
+                    QB = new QTableWidgetItem(qb);
+                    ui->userTable->setItem(row, 2, QR);
+                    ui->userTable->setItem(row, 3, QG);
+                    ui->userTable->setItem(row, 4, QB);
+
+                    rgbvalue.setRgb(r, g, b);
+
+                    ui->userTable->item(row, 1)->setBackground(rgbvalue);
+
                     row++;
                 }
                 else
@@ -169,7 +313,53 @@ void MainWindow::recvFunction()
                     tableuser = rdata.substr(start, end); qtableuser = QString::fromStdString(tableuser);
                     NAME = new QTableWidgetItem(qtableuser);
                     ui->userTable->setItem(row, 1, NAME);
+
+                    const char *ctableuser = tableuser.c_str();
+                    start = rdata.find(tableuser) + strlen(ctableuser);
+                    end = rdata.find(";");
+                    std::string strr = rdata.substr(start, 3);
+                    std::string strg = rdata.substr(start + 3, 3);
+                    std::string strb = rdata.substr(start + 6, 3);
+
+                    cr = strr.c_str(), cg = strg.c_str(), cb = strb.c_str();
+
+                    r = atoi(cr);
+                    g = atoi(cg);
+                    b = atoi(cb);
+
+                    r += 100;
+                    g += 100;
+                    b += 100;
+
+                    if(r > 255)
+                    {
+                        r = 255;
+                    }
+                    if(g > 255)
+                    {
+                        g = 255;
+                    }
+                    if(b > 255)
+                    {
+                        b = 255;
+                    }
+
+                    qr = QString::number(r);
+                    qg = QString::number(g);
+                    qb = QString::number(b);
+                    QR = new QTableWidgetItem(qr);
+                    QG = new QTableWidgetItem(qg);
+                    QB = new QTableWidgetItem(qb);
+                    ui->userTable->setItem(row, 2, QR);
+                    ui->userTable->setItem(row, 3, QG);
+                    ui->userTable->setItem(row, 4, QB);
+
+                    rgbvalue.setRgb(r, g, b);
+
+                    ui->userTable->item(row, 1)->setBackground(rgbvalue);
+
                     row++;
+
                 }
                 break;
             case 'D':
@@ -192,6 +382,7 @@ void MainWindow::recvFunction()
                 uid = rdata.substr(1, 3); quid = QString::fromStdString(uid);
                 if(rdata[4] == '9')
                 {
+                    int r2, g2, b2;
                     start = 5;
                     end = rdata.find(nb[0]);
                     msg = rdata.substr(start, end - start);
@@ -204,15 +395,9 @@ void MainWindow::recvFunction()
                         {
                             currenttime = QTime().currentTime().toString("h:mm:ss AP");
                             qtableuser = ui->userTable->item(i, 1)->text();
-                            if(qtableuser == MainWindow::userName)
-                            {
-                                ui->textBrowser->append('[' + currenttime + " " + QDate().currentDate().toString("d/MM/yy") + ']' + "<span style = \"color: #FA7070\">&lt;" + qtableuser + "&gt;</span>" + qmsg);
-                            }
-                            else
-                            {
-                                ui->textBrowser->append('[' + currenttime + " " + QDate().currentDate().toString("d/MM/yy") + ']' + "<span style = \"color: #6AB9C7\">&lt;" + qtableuser + "&gt;</span>" + qmsg);
 
-                            }
+                            ui->textBrowser->append("<span style = \"color: white\">[" + currenttime + " " + QDate().currentDate().toString("d/MM/yy") + "]</span>" + "<span style = \"color: rgb(" + ui->userTable->item(i, 2)->text() + ',' + ui->userTable->item(i, 3)->text() + ',' + ui->userTable->item(i, 4)->text() + ")\">&lt;" + qtableuser + "&gt;</span> " + "<span style = \"color: white\">" + qmsg + "</span>");
+
 
                             if(ui->textBrowser->textCursor().position() != QTextCursor::End)
                             {
@@ -266,10 +451,10 @@ void MainWindow::recvFunction()
                 //                {
                 //                    s1->write(zchar, strlen(zchar)+1);
                 //                }
-                if(rdata[1] == 'c')
-                {
-                    s1->write(b03, strlen(b03)+1);
-                }
+                //                if(rdata[1] == 'c')
+                //                {
+                //                    s1->write(b03, strlen(b03)+1);
+                //                }
             }
             rdata = "";
             hashtag = "";

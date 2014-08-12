@@ -51,7 +51,7 @@
             <item>
              <widget class="QTextBrowser" name="textBrowser">
               <property name="styleSheet">
-               <string notr="true"/>
+               <string notr="true">background-color: #202A31</string>
               </property>
              </widget>
             </item>
@@ -76,6 +76,18 @@
                 <height>16777215</height>
                </size>
               </property>
+              <property name="styleSheet">
+               <string notr="true"/>
+              </property>
+              <property name="horizontalScrollBarPolicy">
+               <enum>Qt::ScrollBarAlwaysOff</enum>
+              </property>
+              <attribute name="horizontalHeaderVisible">
+               <bool>false</bool>
+              </attribute>
+              <attribute name="horizontalHeaderHighlightSections">
+               <bool>true</bool>
+              </attribute>
               <attribute name="verticalHeaderVisible">
                <bool>false</bool>
               </attribute>
@@ -87,6 +99,21 @@
               <column>
                <property name="text">
                 <string>Username</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>R</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>G</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>B</string>
                </property>
               </column>
              </widget>

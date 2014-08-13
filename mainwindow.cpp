@@ -77,20 +77,15 @@ void MainWindow::setUsername()
     }
     else
     {
-        std::string mainchattext = ui->lineEdit_mainChat->text().toStdString();
-        mainchattext = mainchattext[0];
-        QString firstletter = QString::fromStdString(mainchattext);
+        QString mainchattext = ui->lineEdit_mainChat->text();
 
         QString qmaintext;
-        std::string textverify;
-        for(int i; i < ui->userTable->rowCount(); i++)
+        for(int i = 0; i < ui->userTable->rowCount(); i++)
         {
-            qmaintext = ui->userTable->item(i, 1)->text();
-            textverify = qmaintext.toStdString();
-            if(textverify[0] == mainchattext[0])
+            qmaintext = ui->userTable->item(i, 1)->text().at(0);
+            if(mainchattext.startsWith(qmaintext))
             {
-                ui->lineEdit_mainChat->setText(ui->userTable->item(i, 1)->text());
-                break;
+                ui->lineEdit_mainChat->setText(ui->userTable->item(i, 1)->text() + ": ");
             }
         }
     }

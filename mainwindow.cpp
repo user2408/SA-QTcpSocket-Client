@@ -86,6 +86,7 @@ void MainWindow::setUsername()
             if(mainchattext.startsWith(qmaintext))
             {
                 ui->lineEdit_mainChat->setText(ui->userTable->item(i, 1)->text() + ": ");
+                break;
             }
         }
     }

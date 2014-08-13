@@ -14,8 +14,6 @@ MainWindow::MainWindow(QWidget *parent) :
     logininfo.close();
 
     s1 = new QTcpSocket(this);
-    s2 = new QTcpSocket(this);
-    s2->setProxy(QNetworkProxy::NoProxy);
     keepalive = new QTimer(this);
     cad = new changeAccountDialog(this);
     timecalc = new QTimer(this);
@@ -26,6 +24,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->userTable->setColumnHidden(2, true);
     ui->userTable->setColumnHidden(3, true);
     ui->userTable->setColumnHidden(4, true);
+    ui->lineEdit_mainChat->installEventFilter(this);
 
     connect(ui->action2_Dimensional_Center, SIGNAL(triggered()), this, SLOT(twodc()));
     connect(ui->actionPaper_Thin_City, SIGNAL(triggered()), this, SLOT(ptc()));
@@ -46,7 +45,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->tabWidget, SIGNAL(currentChanged(int)), this, SLOT(setTabTextToDefault()));
     connect(ui->lineEdit_PM, SIGNAL(returnPressed()), this, SLOT(sendPM()));
     connect(timecalc, SIGNAL(timeout()), this, SLOT(setUptime()));
+    connect(ui->userTable, SIGNAL(itemDoubleClicked(QTableWidgetItem*)), this, SLOT(setPM()));
 }
+
 
 const char *IP; int port;
 int pmcount, playercount = 0;
@@ -58,6 +59,7 @@ char randhex[] = "08HxO9TdCC62Nwln1P";
 char b03[] = "03_";
 
 int row = 0;
+int bancon = 0;
 
 int uptimeseconds = 0, uptimeminutes = 0, uptimehours = 0;
 QString quptimeseconds, quptimeminutes, quptimehours;
@@ -67,6 +69,33 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+void MainWindow::setUsername()
+{
+    if(ui->userTable->rowCount() == 0)
+    {
+        ui->lineEdit_mainChat->setText("");
+    }
+    else
+    {
+        std::string mainchattext = ui->lineEdit_mainChat->text().toStdString();
+        mainchattext = mainchattext[0];
+        QString firstletter = QString::fromStdString(mainchattext);
+
+        QString qmaintext;
+        std::string textverify;
+        for(int i; i < ui->userTable->rowCount(); i++)
+        {
+            qmaintext = ui->userTable->item(i, 1)->text();
+            textverify = qmaintext.toStdString();
+            if(textverify[0] == mainchattext[0])
+            {
+                ui->lineEdit_mainChat->setText(ui->userTable->item(i, 1)->text());
+                break;
+            }
+        }
+    }
+}
+
 void MainWindow::connectFunction()
 {
     if(s1->state() == QAbstractSocket::ConnectedState)
@@ -74,15 +103,9 @@ void MainWindow::connectFunction()
         s1->close();
     }
 
-
-    qlogin = "09" + userName + ';' + passwd;
-    std::string strlogin = qlogin.toStdString().c_str();
-    const char *login = strlogin.c_str();
-
     s1->connectToHost(IP, port);
     timecalc->start(1000);
     s1->write(randhex, strlen(randhex)+1);
-    s1->write(login, strlen(login)+1);
     currenttime = QTime().currentTime().toString("h:mm:ss AP");
     ui->textBrowser_2->append("Connected at " + currenttime + " " + QDate().currentDate().toString("d/MM/yy"));
     keepalive->start(10000);
@@ -90,6 +113,10 @@ void MainWindow::connectFunction()
 
 void MainWindow::recvFunction()
 {
+    qlogin = "09" + userName + ';' + passwd;
+    std::string strlogin = qlogin.toStdString().c_str();
+    const char *login = strlogin.c_str();
+
     QHash <QString, QString> users;
     QHashIterator <QString, QString> userIterator(users);
     char buffer[1], nb[] = "\x00", zchar[] = "02Z900_";
@@ -104,6 +131,7 @@ void MainWindow::recvFunction()
 
     int r, g, b;
     const char *cr, *cg, *cb;
+    int b3con = 0;
     do
     {
         rlen = s1->read(buffer, 1);
@@ -118,13 +146,17 @@ void MainWindow::recvFunction()
             switch(rdata[0])
             {
             case 'C':
+                if(b3con == 1)
+                {
+                    s1->write("0", strlen("0")+1);
+                }
                 break;
             case 'A':
                 playercount++;
                 qplayercount = QString::number(playercount);
                 ui->label->setText("Player count: " + qplayercount);
                 //                s1->write("0c", strlen("0c")+1);
-                //                s1->write("01", strlen("01")+1);
+                s1->write("01", strlen("01")+1);
                 s1->write(b03, strlen(b03)+1);
                 uid = rdata.substr(1, 3); quid = QString::fromStdString(uid);
                 ID = new QTableWidgetItem(quid);
@@ -445,16 +477,22 @@ void MainWindow::recvFunction()
             case '0':
                 if(rdata[1] == '8')
                 {
-                    s1->write(b03, strlen(b03)+1);
+                    s1->write(login, strlen(login)+1);
                 }
                 //                if(rdata[1] == '1')
                 //                {
                 //                    s1->write(zchar, strlen(zchar)+1);
+                //                    s1->write(b03, strlen(b03)+1);
                 //                }
                 //                if(rdata[1] == 'c')
                 //                {
-                //                    s1->write(b03, strlen(b03)+1);
+                //                    s1->write(zchar, strlen(zchar)+1);
                 //                }
+                if(rdata[1] == '9' && rdata[2] == '1')
+                {
+                    ui->textBrowser_2->append("Banned.");
+                    bancon++;
+                }
             }
             rdata = "";
             hashtag = "";
@@ -499,9 +537,13 @@ void MainWindow::reconnect()
     keepalive->stop();
     timecalc->stop();
     clearRows();
-    currenttime = QTime().currentTime().toString("h:m:s AP");
-    ui->textBrowser_2->append("Disconnection detected at " + currenttime + '\n');
-    connectFunction();
+    if(bancon == 1)
+    {
+        currenttime = QTime().currentTime().toString("h:m:s AP");
+        ui->textBrowser_2->append("Disconnection detected at " + currenttime + '\n');
+        connectFunction();
+        bancon--;
+    }
 }
 
 void MainWindow::setTabTextToDefault()
@@ -644,4 +686,27 @@ void MainWindow::cartesian()
     IP = "67.19.138.234"; port = 1138;
     ui->tabWidget->setTabText(0, "Cartesian Republic");
     connectFunction();
+}
+
+void MainWindow::setPM()
+{
+    ui->lineEdit_PMName->setText(ui->userTable->currentItem()->text());
+    ui->tabWidget->setCurrentIndex(1);
+}
+
+bool MainWindow::eventFilter(QObject *obj, QEvent *event)
+{
+    if (obj == ui->lineEdit_mainChat)
+    {
+        if (event->type() == QEvent::KeyPress)
+        {
+            QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
+            if (keyEvent->key() == Qt::Key_Tab)
+            {
+                setUsername();
+                return true;
+            }
+        }
+        return QMainWindow::eventFilter(obj, event);
+    }
 }

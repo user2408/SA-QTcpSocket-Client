@@ -12,6 +12,7 @@
 #include <QHash>
 #include <QDate>
 #include <QColor>
+#include <QKeyEvent>
 #include <cstdlib>
 
 #include "changeaccountdialog.h"
@@ -28,6 +29,7 @@ public:
     ~MainWindow();
     changeAccountDialog *cad;
     static QString userName, passwd;
+    bool eventFilter(QObject *, QEvent *);
 public slots:
     void twodc();
     void ptc();
@@ -50,12 +52,16 @@ public slots:
     void setTabTextToDefault();
     void sendPM();
     void setUptime();
+    void setPM();
+    void setUsername();
 
 private:
     Ui::MainWindow *ui;
-    QTcpSocket *s1, *s2;
+    QTcpSocket *s1;
     QTimer *keepalive;
     QTimer *timecalc;
+signals:
+    void tabPressed();
 };
 
 #endif // MAINWINDOW_H
